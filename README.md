@@ -99,6 +99,25 @@ ngrok http 3000
 - Point Slack Event Subscriptions to your production URL (e.g. `https://your-domain.com/slack/events`).
 - Keep `PLANE_BASE_URL` and other Plane vars as needed for your self-hosted Plane.
 
+### Railway (fix: `Cannot find module '/app/dist/main'`)
+
+That error means the **build step never produced `dist/`** before `node` ran. Do one of the following:
+
+1. **Dockerfile (recommended)**  
+   - Use the `Dockerfile` at the **repo root** or `backend/Dockerfile` if the service root is `backend`.  
+   - In Railway: **Settings → Build → Builder = Dockerfile**, and set **Dockerfile path** if needed (`Dockerfile` or `backend/Dockerfile`).  
+   - The image runs `npm ci` → `npm run build` → starts with `prisma migrate deploy` + `node dist/main.js`.
+
+2. **Nixpacks (no Docker)**  
+   - Set **Root Directory** to `backend` so `package.json` and `npm run build` are found.  
+   - `backend/nixpacks.toml` runs `npm ci` and `npm run build` before `npm start`.  
+   - Ensure **Build Command** is `npm run build` (or leave empty so Nixpacks uses the config).
+
+3. **Scripts**  
+   - `npm start` runs migrations then `node dist/main.js`. You must run **`npm run build`** in the build phase (Dockerfile and `nixpacks.toml` do this).
+
+Set `REDIS_HOST` / `REDIS_PORT` (and password if any) for BullMQ when deploying.
+
 ## Scripts (backend)
 
 - `npm run start:dev` — run with watch (local)
